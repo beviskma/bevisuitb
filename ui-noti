@@ -38,7 +38,9 @@ local fps = 60  -- mặc định, có thể cập nhật động nếu muốn
 local fpsLabel = createLabel("FPSLabel", "FPS: " .. fps, 50)
 
 -- Thời gian
-local timeLabel = createLabel("TimeLabel", "Time: 0s", 25)
+local minutes = math.floor(currentTime / 60)
+local seconds = math.floor(currentTime % 60)
+timeLabel.Text = string.format("Time: %dm %02ds", minutes, seconds)
 
 -- Cập nhật thời gian và fps liên tục
 local startTime = tick()
