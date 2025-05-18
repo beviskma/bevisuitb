@@ -1,59 +1,75 @@
--- LocalScript (StarterPlayerScripts)
-
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-
 local player = Players.LocalPlayer
-local sendWebhook = ReplicatedStorage:WaitForChild("SendWebhook")
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 
--- GUI Setup
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-screenGui.Name = "InfoGui"
 screenGui.ResetOnSpawn = false
+screenGui.Name = "WebhookUI"
 
+-- Frame chính
 local frame = Instance.new("Frame", screenGui)
-frame.Size = UDim2.new(0, 500, 0, 100)
-frame.Position = UDim2.new(0.5, -250, 0.05, 0)
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-frame.BackgroundTransparency = 0.3
+frame.Size = UDim2.new(0, 400, 0, 120)
+frame.Position = UDim2.new(0.5, -200, 0.05, 0)
+frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+frame.BackgroundTransparency = 0.2
 frame.BorderColor3 = Color3.fromRGB(255, 182, 193)
-frame.BorderSizePixel = 1
+frame.BorderSizePixel = 2
+frame.AnchorPoint = Vector2.new(0.5, 0)
+frame.Name = "MainFrame"
 
-local corner = Instance.new("UICorner", frame)
-corner.CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
 
+-- Username
+local usernameLabel = Instance.new("TextLabel", frame)
+usernameLabel.Size = UDim2.new(1, -10, 0, 20)
+usernameLabel.Position = UDim2.new(0, 5, 0, 5)
+usernameLabel.BackgroundTransparency = 1
+usernameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+usernameLabel.TextXAlignment = Enum.TextXAlignment.Left
+usernameLabel.Font = Enum.Font.SourceSansBold
+usernameLabel.TextSize = 18
+usernameLabel.Text = "Username: " .. player.Name
+
+-- Time + FPS
 local infoLabel = Instance.new("TextLabel", frame)
-infoLabel.Size = UDim2.new(1, -10, 0.4, 0)
-infoLabel.Position = UDim2.new(0, 5, 0, 0)
+infoLabel.Size = UDim2.new(1, -10, 0, 20)
+infoLabel.Position = UDim2.new(0, 5, 0, 30)
 infoLabel.BackgroundTransparency = 1
 infoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-infoLabel.Font = Enum.Font.SourceSansBold
-infoLabel.TextScaled = true
-infoLabel.Text = "Loading..."
+infoLabel.TextXAlignment = Enum.TextXAlignment.Left
+infoLabel.Font = Enum.Font.SourceSans
+infoLabel.TextSize = 17
+infoLabel.Text = "Time: 0s - FPS: 0"
 
-local textBox = Instance.new("TextBox", frame)
-textBox.Size = UDim2.new(0.7, -10, 0.3, 0)
-textBox.Position = UDim2.new(0, 5, 0.5, 5)
-textBox.PlaceholderText = "Paste your Discord Webhook here..."
-textBox.TextScaled = true
-textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-textBox.Font = Enum.Font.SourceSans
-textBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+-- Webhook Input
+local webhookBox = Instance.new("TextBox", frame)
+webhookBox.Size = UDim2.new(1, -10, 0, 20)
+webhookBox.Position = UDim2.new(0, 5, 0, 55)
+webhookBox.PlaceholderText = "Paste Webhook URL here"
+webhookBox.Font = Enum.Font.SourceSans
+webhookBox.TextSize = 16
+webhookBox.Text = ""
+webhookBox.ClearTextOnFocus = false
+webhookBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+webhookBox.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", webhookBox).CornerRadius = UDim.new(0, 6)
 
-local sendButton = Instance.new("TextButton", frame)
-sendButton.Size = UDim2.new(0.25, 0, 0.3, 0)
-sendButton.Position = UDim2.new(0.73, 0, 0.5, 5)
-sendButton.Text = "Send"
-sendButton.TextScaled = true
-sendButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-sendButton.Font = Enum.Font.SourceSansBold
-sendButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+-- Confirm Button
+local confirmBtn = Instance.new("TextButton", frame)
+confirmBtn.Size = UDim2.new(1, -10, 0, 25)
+confirmBtn.Position = UDim2.new(0, 5, 0, 80)
+confirmBtn.Text = "Confirm & Send"
+confirmBtn.Font = Enum.Font.SourceSansBold
+confirmBtn.TextSize = 17
+confirmBtn.BackgroundColor3 = Color3.fromRGB(200, 100, 130)
+confirmBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", confirmBtn).CornerRadius = UDim.new(0, 6)
 
--- Time tracking
+--===[ Thời gian + FPS cập nhật ]===--
 local startTime = tick()
-local frames = 0
 local fps = 0
+local frames = 0
 local lastUpdate = tick()
 
 RunService.RenderStepped:Connect(function()
@@ -63,20 +79,44 @@ RunService.RenderStepped:Connect(function()
 		fps = frames
 		frames = 0
 		lastUpdate = now
+		local elapsed = tick() - startTime
+		local minutes = math.floor(elapsed / 60)
+		local seconds = math.floor(elapsed % 60)
+		infoLabel.Text = string.format("Time: %dm %02ds - FPS: %d", minutes, seconds, fps)
 	end
-
-	local elapsed = now - startTime
-	local minutes = math.floor(elapsed / 60)
-	local seconds = math.floor(elapsed % 60)
-
-	infoLabel.Text = string.format("Username: %s    Time: %dm %02ds    FPS: %d", player.Name, minutes, seconds, fps)
 end)
 
-sendButton.MouseButton1Click:Connect(function()
-	local url = textBox.Text
-	if url ~= "" then
-		local elapsed = tick() - startTime
-		local timeString = string.format("%dm %02ds", math.floor(elapsed / 60), math.floor(elapsed % 60))
-		sendWebhook:FireServer(player.Name, timeString, fps, url)
+--===[ Khi bấm Confirm gửi Webhook ]===--
+confirmBtn.MouseButton1Click:Connect(function()
+	local url = webhookBox.Text
+	if url == "" or not url:match("^https://") then
+		warn("Webhook chưa hợp lệ.")
+		return
+	end
+
+	local elapsed = tick() - startTime
+	local minutes = math.floor(elapsed / 60)
+	local seconds = math.floor(elapsed % 60)
+	local timeStr = string.format("%dm %02ds", minutes, seconds)
+
+	local data = {
+		["username"] = "Client Info",
+		["embeds"] = {{
+			["title"] = "Thông tin người chơi",
+			["description"] = string.format("**Username:** %s\n**Time:** %s\n**FPS:** %d", player.Name, timeStr, fps),
+			["color"] = 16761035
+		}}
+	}
+
+	local success, err = pcall(function()
+		local json = HttpService:JSONEncode(data)
+		HttpService:PostAsync(url, json, Enum.HttpContentType.ApplicationJson)
+	end)
+
+	if success then
+		confirmBtn.Text = "Đã gửi ✅"
+	else
+		confirmBtn.Text = "Lỗi gửi ❌"
+		warn(err)
 	end
 end)
