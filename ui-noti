@@ -1,51 +1,82 @@
--- Giao diện UI được tạo bằng Lua trong Roblox
+-- LocalScript (StarterPlayerScripts)
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
 local player = Players.LocalPlayer
+local sendWebhook = ReplicatedStorage:WaitForChild("SendWebhook")
 
--- Tạo ScreenGui
+-- GUI Setup
 local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-screenGui.Name = "InfoDisplay"
+screenGui.Name = "InfoGui"
+screenGui.ResetOnSpawn = false
 
--- Tạo Frame nền
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 100)
-frame.Position = UDim2.new(0.5, -150, 0, 50)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-frame.BorderSizePixel = 0
-frame.Parent = screenGui
+local frame = Instance.new("Frame", screenGui)
+frame.Size = UDim2.new(0, 500, 0, 100)
+frame.Position = UDim2.new(0.5, -250, 0.05, 0)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BackgroundTransparency = 0.3
+frame.BorderColor3 = Color3.fromRGB(255, 182, 193)
+frame.BorderSizePixel = 1
 
--- Hàm tạo TextLabel đơn giản
-local function createLabel(name, text, posY)
-    local label = Instance.new("TextLabel")
-    label.Name = name
-    label.Text = text
-    label.Size = UDim2.new(1, 0, 0, 25)
-    label.Position = UDim2.new(0, 0, 0, posY)
-    label.BackgroundTransparency = 1
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.Font = Enum.Font.SourceSansBold
-    label.TextScaled = true
-    label.Parent = frame
-    return label
-end
+local corner = Instance.new("UICorner", frame)
+corner.CornerRadius = UDim.new(0, 8)
 
--- Hiển thị Username
-local usernameLabel = createLabel("UsernameLabel", "Username: " .. player.Name, 0)
+local infoLabel = Instance.new("TextLabel", frame)
+infoLabel.Size = UDim2.new(1, -10, 0.4, 0)
+infoLabel.Position = UDim2.new(0, 5, 0, 0)
+infoLabel.BackgroundTransparency = 1
+infoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+infoLabel.Font = Enum.Font.SourceSansBold
+infoLabel.TextScaled = true
+infoLabel.Text = "Loading..."
 
--- FPS giả định (nếu muốn hiển thị thật thì cần hàm đo FPS)
-local fps = 60  -- mặc định, có thể cập nhật động nếu muốn
-local fpsLabel = createLabel("FPSLabel", "FPS: " .. fps, 50)
+local textBox = Instance.new("TextBox", frame)
+textBox.Size = UDim2.new(0.7, -10, 0.3, 0)
+textBox.Position = UDim2.new(0, 5, 0.5, 5)
+textBox.PlaceholderText = "Paste your Discord Webhook here..."
+textBox.TextScaled = true
+textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+textBox.Font = Enum.Font.SourceSans
+textBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 
--- Thời gian
-local minutes = math.floor(currentTime / 60)
-local seconds = math.floor(currentTime % 60)
-timeLabel.Text = string.format("Time: %dm %02ds", minutes, seconds)
+local sendButton = Instance.new("TextButton", frame)
+sendButton.Size = UDim2.new(0.25, 0, 0.3, 0)
+sendButton.Position = UDim2.new(0.73, 0, 0.5, 5)
+sendButton.Text = "Send"
+sendButton.TextScaled = true
+sendButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+sendButton.Font = Enum.Font.SourceSansBold
+sendButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
--- Cập nhật thời gian và fps liên tục
+-- Time tracking
 local startTime = tick()
-game:GetService("RunService").RenderStepped:Connect(function()
-    local currentTime = tick() - startTime
-    timeLabel.Text = string.format("Time: %ds", math.floor(currentTime))
-    -- Nếu muốn cập nhật FPS động, cần đo thời gian giữa các khung hình
+local frames = 0
+local fps = 0
+local lastUpdate = tick()
+
+RunService.RenderStepped:Connect(function()
+	frames += 1
+	local now = tick()
+	if now - lastUpdate >= 1 then
+		fps = frames
+		frames = 0
+		lastUpdate = now
+	end
+
+	local elapsed = now - startTime
+	local minutes = math.floor(elapsed / 60)
+	local seconds = math.floor(elapsed % 60)
+
+	infoLabel.Text = string.format("Username: %s    Time: %dm %02ds    FPS: %d", player.Name, minutes, seconds, fps)
+end)
+
+sendButton.MouseButton1Click:Connect(function()
+	local url = textBox.Text
+	if url ~= "" then
+		local elapsed = tick() - startTime
+		local timeString = string.format("%dm %02ds", math.floor(elapsed / 60), math.floor(elapsed % 60))
+		sendWebhook:FireServer(player.Name, timeString, fps, url)
+	end
 end)
