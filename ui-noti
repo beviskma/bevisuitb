@@ -1,0 +1,49 @@
+-- Giao diện UI được tạo bằng Lua trong Roblox
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- Tạo ScreenGui
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+screenGui.Name = "InfoDisplay"
+
+-- Tạo Frame nền
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 100)
+frame.Position = UDim2.new(0.5, -150, 0, 50)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
+frame.Parent = screenGui
+
+-- Hàm tạo TextLabel đơn giản
+local function createLabel(name, text, posY)
+    local label = Instance.new("TextLabel")
+    label.Name = name
+    label.Text = text
+    label.Size = UDim2.new(1, 0, 0, 25)
+    label.Position = UDim2.new(0, 0, 0, posY)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Font = Enum.Font.SourceSansBold
+    label.TextScaled = true
+    label.Parent = frame
+    return label
+end
+
+-- Hiển thị Username
+local usernameLabel = createLabel("UsernameLabel", "Username: " .. player.Name, 0)
+
+-- FPS giả định (nếu muốn hiển thị thật thì cần hàm đo FPS)
+local fps = 60  -- mặc định, có thể cập nhật động nếu muốn
+local fpsLabel = createLabel("FPSLabel", "FPS: " .. fps, 50)
+
+-- Thời gian
+local timeLabel = createLabel("TimeLabel", "Time: 0s", 25)
+
+-- Cập nhật thời gian và fps liên tục
+local startTime = tick()
+game:GetService("RunService").RenderStepped:Connect(function()
+    local currentTime = tick() - startTime
+    timeLabel.Text = string.format("Time: %ds", math.floor(currentTime))
+    -- Nếu muốn cập nhật FPS động, cần đo thời gian giữa các khung hình
+end)
