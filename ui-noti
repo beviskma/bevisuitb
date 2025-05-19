@@ -8,11 +8,16 @@ ScreenGui.Parent = game.CoreGui
 local Frame = Instance.new("Frame")
 Frame.Size = UDim2.new(0, 300, 0, 160)
 Frame.Position = UDim2.new(0.5, -150, 0, 50)
-Frame.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
-Frame.BackgroundTransparency = 0.3
-Frame.BorderColor3 = Color3.fromRGB(255, 182, 193)
+Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- nền đen
+Frame.BackgroundTransparency = 0.3 -- trong suốt
+Frame.BorderColor3 = Color3.fromRGB(255, 182, 193) -- viền hồng nhạt
 Frame.BorderSizePixel = 2
 Frame.Parent = ScreenGui
+
+-- BO TRÒN GÓC
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.Parent = Frame
 
 local layout = Instance.new("UIListLayout")
 layout.Parent = Frame
@@ -35,17 +40,18 @@ local function createLabel()
     return label
 end
 
--- Labels
+-- Các dòng label
 local usernameLabel = createLabel()
 local timeLabel = createLabel()
 local fpsLabel = createLabel()
 
--- Webhook box
+-- Ô nhập webhook
 local webhookBox = Instance.new("TextBox")
 webhookBox.Size = UDim2.new(1, -20, 0, 25)
 webhookBox.PlaceholderText = "Enter Webhook URL"
 webhookBox.Text = ""
 webhookBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+webhookBox.BackgroundTransparency = 0.2
 webhookBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 webhookBox.Font = Enum.Font.SourceSans
 webhookBox.TextSize = 16
@@ -55,26 +61,30 @@ webhookBox.TextXAlignment = Enum.TextXAlignment.Left
 webhookBox.TextYAlignment = Enum.TextYAlignment.Center
 webhookBox.Parent = Frame
 
--- Update logic
+local boxCorner = Instance.new("UICorner")
+boxCorner.CornerRadius = UDim.new(0, 8)
+boxCorner.Parent = webhookBox
+
+-- Cập nhật thời gian & FPS
 local startTime = tick()
 local lastFpsUpdate = 0
 local frames = 0
 local currentFps = 0
 
-RunService.RenderStepped:Connect(function(deltaTime)
+RunService.RenderStepped:Connect(function()
     frames += 1
     local now = tick()
 
-    -- Username update
+    -- Username
     usernameLabel.Text = "Username: " .. Players.LocalPlayer.Name
 
-    -- Time update
+    -- Time
     local elapsed = now - startTime
     local minutes = math.floor(elapsed / 60)
     local seconds = math.floor(elapsed % 60)
     timeLabel.Text = string.format("Time: %dm %ds", minutes, seconds)
 
-    -- FPS update every 1 second
+    -- FPS cập nhật mỗi 1 giây
     if now - lastFpsUpdate >= 1 then
         currentFps = frames
         frames = 0
@@ -82,3 +92,4 @@ RunService.RenderStepped:Connect(function(deltaTime)
         fpsLabel.Text = "FPS: " .. currentFps
     end
 end)
+
