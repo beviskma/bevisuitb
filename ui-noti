@@ -1,35 +1,40 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "CustomUI"
 ScreenGui.Parent = game.CoreGui
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 300, 0, 160)
-Frame.Position = UDim2.new(0.5, -150, 0, 50)
-Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- nền đen
-Frame.BackgroundTransparency = 0.3 -- trong suốt
-Frame.BorderColor3 = Color3.fromRGB(255, 182, 193) -- viền hồng nhạt
+Frame.Size = UDim2.new(0, 320, 0, 180)
+Frame.Position = UDim2.new(0.5, -160, 0, 10) -- ← Nâng UI lên trên
+Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Frame.BackgroundTransparency = 0.3
+Frame.BorderColor3 = Color3.fromRGB(255, 182, 193) -- Viền hồng nhạt
 Frame.BorderSizePixel = 2
+Frame.ClipsDescendants = true
 Frame.Parent = ScreenGui
+Frame.Active = true
+Frame.Draggable = true -- ← Cho phép di chuyển bằng chuột
 
--- BO TRÒN GÓC
+-- Bo tròn khung
 local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.CornerRadius = UDim.new(0, 20)
 UICorner.Parent = Frame
 
+-- Danh sách nội dung căn giữa
 local layout = Instance.new("UIListLayout")
 layout.Parent = Frame
 layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 layout.VerticalAlignment = Enum.VerticalAlignment.Center
 layout.FillDirection = Enum.FillDirection.Vertical
 layout.SortOrder = Enum.SortOrder.LayoutOrder
-layout.Padding = UDim.new(0, 5)
+layout.Padding = UDim.new(0, 6)
 
 local function createLabel()
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -20, 0, 25)
+    label.Size = UDim2.new(1, -20, 0, 30)
     label.BackgroundTransparency = 1
     label.TextColor3 = Color3.fromRGB(255, 255, 255)
     label.TextScaled = true
@@ -40,17 +45,16 @@ local function createLabel()
     return label
 end
 
--- Các dòng label
 local usernameLabel = createLabel()
 local timeLabel = createLabel()
 local fpsLabel = createLabel()
 
 -- Ô nhập webhook
 local webhookBox = Instance.new("TextBox")
-webhookBox.Size = UDim2.new(1, -20, 0, 25)
+webhookBox.Size = UDim2.new(1, -20, 0, 30)
 webhookBox.PlaceholderText = "Enter Webhook URL"
 webhookBox.Text = ""
-webhookBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+webhookBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 webhookBox.BackgroundTransparency = 0.2
 webhookBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 webhookBox.Font = Enum.Font.SourceSans
@@ -59,13 +63,15 @@ webhookBox.TextWrapped = false
 webhookBox.TextTruncate = Enum.TextTruncate.AtEnd
 webhookBox.TextXAlignment = Enum.TextXAlignment.Left
 webhookBox.TextYAlignment = Enum.TextYAlignment.Center
+webhookBox.ClearTextOnFocus = false
 webhookBox.Parent = Frame
 
+-- Bo tròn ô nhập
 local boxCorner = Instance.new("UICorner")
-boxCorner.CornerRadius = UDim.new(0, 8)
+boxCorner.CornerRadius = UDim.new(0, 10)
 boxCorner.Parent = webhookBox
 
--- Cập nhật thời gian & FPS
+-- Cập nhật dữ liệu
 local startTime = tick()
 local lastFpsUpdate = 0
 local frames = 0
@@ -84,7 +90,7 @@ RunService.RenderStepped:Connect(function()
     local seconds = math.floor(elapsed % 60)
     timeLabel.Text = string.format("Time: %dm %ds", minutes, seconds)
 
-    -- FPS cập nhật mỗi 1 giây
+    -- FPS
     if now - lastFpsUpdate >= 1 then
         currentFps = frames
         frames = 0
@@ -92,4 +98,3 @@ RunService.RenderStepped:Connect(function()
         fpsLabel.Text = "FPS: " .. currentFps
     end
 end)
-
