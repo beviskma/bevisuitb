@@ -1,122 +1,84 @@
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer
 local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
 
-local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-screenGui.ResetOnSpawn = false
-screenGui.Name = "WebhookUI"
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "CustomUI"
+ScreenGui.Parent = game.CoreGui
 
--- Frame chính
-local frame = Instance.new("Frame", screenGui)
-frame.Size = UDim2.new(0, 400, 0, 120)
-frame.Position = UDim2.new(0.5, -200, 0.05, 0)
-frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-frame.BackgroundTransparency = 0.2
-frame.BorderColor3 = Color3.fromRGB(255, 182, 193)
-frame.BorderSizePixel = 2
-frame.AnchorPoint = Vector2.new(0.5, 0)
-frame.Name = "MainFrame"
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 300, 0, 160)
+Frame.Position = UDim2.new(0.5, -150, 0, 50)
+Frame.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
+Frame.BackgroundTransparency = 0.3
+Frame.BorderColor3 = Color3.fromRGB(255, 182, 193)
+Frame.BorderSizePixel = 2
+Frame.Parent = ScreenGui
 
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+local layout = Instance.new("UIListLayout")
+layout.Parent = Frame
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout.VerticalAlignment = Enum.VerticalAlignment.Center
+layout.FillDirection = Enum.FillDirection.Vertical
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Padding = UDim.new(0, 5)
 
--- Username
-local usernameLabel = Instance.new("TextLabel", frame)
-usernameLabel.Size = UDim2.new(1, -10, 0, 20)
-usernameLabel.Position = UDim2.new(0, 5, 0, 5)
-usernameLabel.BackgroundTransparency = 1
-usernameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-usernameLabel.TextXAlignment = Enum.TextXAlignment.Left
-usernameLabel.Font = Enum.Font.SourceSansBold
-usernameLabel.TextSize = 18
-usernameLabel.Text = "Username: " .. player.Name
+local function createLabel()
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -20, 0, 25)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextScaled = true
+    label.Font = Enum.Font.SourceSansBold
+    label.TextXAlignment = Enum.TextXAlignment.Center
+    label.TextYAlignment = Enum.TextYAlignment.Center
+    label.Parent = Frame
+    return label
+end
 
--- Time + FPS
-local infoLabel = Instance.new("TextLabel", frame)
-infoLabel.Size = UDim2.new(1, -10, 0, 20)
-infoLabel.Position = UDim2.new(0, 5, 0, 30)
-infoLabel.BackgroundTransparency = 1
-infoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-infoLabel.TextXAlignment = Enum.TextXAlignment.Left
-infoLabel.Font = Enum.Font.SourceSans
-infoLabel.TextSize = 17
-infoLabel.Text = "Time: 0s - FPS: 0"
+-- Labels
+local usernameLabel = createLabel()
+local timeLabel = createLabel()
+local fpsLabel = createLabel()
 
--- Webhook Input
-local webhookBox = Instance.new("TextBox", frame)
-webhookBox.Size = UDim2.new(1, -10, 0, 20)
-webhookBox.Position = UDim2.new(0, 5, 0, 55)
-webhookBox.PlaceholderText = "Paste Webhook URL here"
+-- Webhook box
+local webhookBox = Instance.new("TextBox")
+webhookBox.Size = UDim2.new(1, -20, 0, 25)
+webhookBox.PlaceholderText = "Enter Webhook URL"
+webhookBox.Text = ""
+webhookBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+webhookBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 webhookBox.Font = Enum.Font.SourceSans
 webhookBox.TextSize = 16
-webhookBox.Text = ""
-webhookBox.ClearTextOnFocus = false
-webhookBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-webhookBox.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", webhookBox).CornerRadius = UDim.new(0, 6)
+webhookBox.TextWrapped = false
+webhookBox.TextTruncate = Enum.TextTruncate.AtEnd
+webhookBox.TextXAlignment = Enum.TextXAlignment.Left
+webhookBox.TextYAlignment = Enum.TextYAlignment.Center
+webhookBox.Parent = Frame
 
--- Confirm Button
-local confirmBtn = Instance.new("TextButton", frame)
-confirmBtn.Size = UDim2.new(1, -10, 0, 25)
-confirmBtn.Position = UDim2.new(0, 5, 0, 80)
-confirmBtn.Text = "Confirm & Send"
-confirmBtn.Font = Enum.Font.SourceSansBold
-confirmBtn.TextSize = 17
-confirmBtn.BackgroundColor3 = Color3.fromRGB(200, 100, 130)
-confirmBtn.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", confirmBtn).CornerRadius = UDim.new(0, 6)
-
---===[ Thời gian + FPS cập nhật ]===--
+-- Update logic
 local startTime = tick()
-local fps = 0
+local lastFpsUpdate = 0
 local frames = 0
-local lastUpdate = tick()
+local currentFps = 0
 
-RunService.RenderStepped:Connect(function()
-	frames += 1
-	local now = tick()
-	if now - lastUpdate >= 1 then
-		fps = frames
-		frames = 0
-		lastUpdate = now
-		local elapsed = tick() - startTime
-		local minutes = math.floor(elapsed / 60)
-		local seconds = math.floor(elapsed % 60)
-		infoLabel.Text = string.format("Time: %dm %02ds - FPS: %d", minutes, seconds, fps)
-	end
-end)
+RunService.RenderStepped:Connect(function(deltaTime)
+    frames += 1
+    local now = tick()
 
---===[ Khi bấm Confirm gửi Webhook ]===--
-confirmBtn.MouseButton1Click:Connect(function()
-	local url = webhookBox.Text
-	if url == "" or not url:match("^https://") then
-		warn("Webhook chưa hợp lệ.")
-		return
-	end
+    -- Username update
+    usernameLabel.Text = "Username: " .. Players.LocalPlayer.Name
 
-	local elapsed = tick() - startTime
-	local minutes = math.floor(elapsed / 60)
-	local seconds = math.floor(elapsed % 60)
-	local timeStr = string.format("%dm %02ds", minutes, seconds)
+    -- Time update
+    local elapsed = now - startTime
+    local minutes = math.floor(elapsed / 60)
+    local seconds = math.floor(elapsed % 60)
+    timeLabel.Text = string.format("Time: %dm %ds", minutes, seconds)
 
-	local data = {
-		["username"] = "Client Info",
-		["embeds"] = {{
-			["title"] = "Thông tin người chơi",
-			["description"] = string.format("**Username:** %s\n**Time:** %s\n**FPS:** %d", player.Name, timeStr, fps),
-			["color"] = 16761035
-		}}
-	}
-
-	local success, err = pcall(function()
-		local json = HttpService:JSONEncode(data)
-		HttpService:PostAsync(url, json, Enum.HttpContentType.ApplicationJson)
-	end)
-
-	if success then
-		confirmBtn.Text = "Đã gửi ✅"
-	else
-		confirmBtn.Text = "Lỗi gửi ❌"
-		warn(err)
-	end
+    -- FPS update every 1 second
+    if now - lastFpsUpdate >= 1 then
+        currentFps = frames
+        frames = 0
+        lastFpsUpdate = now
+        fpsLabel.Text = "FPS: " .. currentFps
+    end
 end)
